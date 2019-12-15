@@ -1,0 +1,47 @@
+Description: Stop using time.clock, removed in 3.8
+Bug-Debian: https://bugs.debian.org/943418
+Author: Matthias Klose <doko@ubuntu.com>
+Last-Update: 2019-10-24
+
+--- a/xlrd/book.py
++++ b/xlrd/book.py
+@@ -17,6 +17,12 @@ if sys.version.startswith("IronPython"):
+     # print >> sys.stderr, "...importing encodings"
+     import encodings
+ 
++try:
++    from time import perf_counter
++except ImportError:
++    # Python 2.7
++    from time import clock as perf_counter
++
+ empty_cell = sheet.empty_cell # for exposure to the world ...
+ 
+ DEBUG = 0
+@@ -71,7 +77,7 @@ def open_workbook_xls(filename=None,
+     encoding_override=None,
+     formatting_info=False, on_demand=False, ragged_rows=False,
+     ):
+-    t0 = time.clock()
++    t0 = perf_counter()
+     if TOGGLE_GC:
+         orig_gc_enabled = gc.isenabled()
+         if orig_gc_enabled:
+@@ -86,7 +92,7 @@ def open_workbook_xls(filename=None,
+             on_demand=on_demand,
+             ragged_rows=ragged_rows,
+             )
+-        t1 = time.clock()
++        t1 = perf_counter()
+         bk.load_time_stage_1 = t1 - t0
+         biff_version = bk.getbof(XL_WORKBOOK_GLOBALS)
+         if not biff_version:
+@@ -127,7 +133,7 @@ def open_workbook_xls(filename=None,
+         if TOGGLE_GC:
+             if orig_gc_enabled:
+                 gc.enable()
+-        t2 = time.clock()
++        t2 = perf_counter()
+         bk.load_time_stage_2 = t2 - t1
+     except:
+         bk.release_resources()
